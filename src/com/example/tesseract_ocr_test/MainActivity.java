@@ -1,4 +1,13 @@
 package com.example.tesseract_ocr_test;
+/**
+ * Tesseract-OCR Example Application for Android (using the tess-two) 
+ * 
+ * Requires:
+ *  * Android NDK environment
+ *  * Tess-two library project (https://github.com/rmtheis/tess-two) as library.
+ *  * Learned Data (http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.jpn.tar.gz)
+ *      into "assets/" directory.
+ */
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -6,7 +15,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
 import com.googlecode.tesseract.android.TessBaseAPI;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,6 +33,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
 public class MainActivity extends Activity {
@@ -31,6 +43,8 @@ public class MainActivity extends Activity {
 	final static String TMP_IMAGE_PATH = Environment.getExternalStorageDirectory() + "/tmp_ocr.jpg";
 	// 学習データの保存先パス
 	final static String LEARN_DATA_PATH = Environment.getExternalStorageDirectory() + "/learn/";
+	// 学習データのファイル名
+	final static String LEARN_DATA_FILE_NAME = "jpn.traineddata";
 	
 	// キャプチャされた画像
 	private Bitmap capturedBitmap;
@@ -48,7 +62,9 @@ public class MainActivity extends Activity {
 		try {
 			checkLearnData();
 		} catch (IOException e) {
+			Toast.makeText(getApplicationContext(), "Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
 			e.printStackTrace();
+			finish();
 		}
 		
 		// 初期化
@@ -160,25 +176,28 @@ public class MainActivity extends Activity {
 	}
 	
 	/**
-	 * 学習データのチェック
+	 * 学習データのチェック および assets ディレクトリからのコピー処理
 	 * @throws IOException
+	 * (Tesseract-OCRによる処理の為に、前もって assets ディレクトリからSDカード上に学習データをコピーする)
 	 */
 	protected void checkLearnData() throws IOException {
+		// 学習データの保存先ディレクトリのチェック
 		File learn_data_dir = new File(LEARN_DATA_PATH + "tessdata/");
-		if (learn_data_dir.exists() == false) {
+		if (!learn_data_dir.exists())
 			learn_data_dir.mkdir();
-		}
 		
-		File learn_data_path = new File(LEARN_DATA_PATH + "tessdata/jpn.traineddata");
-		if (learn_data_path.exists() == false) {
+		// 学習データファイルがSDカード上に存在するか否かのチェック
+		File learn_data_file = new File(LEARN_DATA_PATH + "tessdata/" + LEARN_DATA_FILE_NAME);
+		if (!learn_data_file.exists()) {
 			// 学習データをassetsからSDカードへコピー
-			InputStream input = getAssets().open("jpn.traineddata");
-			FileOutputStream output = new FileOutputStream(LEARN_DATA_PATH + "tessdata/jpn.traineddata", false);
+			Toast.makeText(getApplicationContext(), "学習データをSDカード上にコピーしています...", Toast.LENGTH_SHORT).show();
+			InputStream input = getResources().getAssets().open(LEARN_DATA_FILE_NAME);
+			FileOutputStream output = new FileOutputStream(LEARN_DATA_PATH + "tessdata/" + LEARN_DATA_FILE_NAME, true);
 			byte[] buffer = new byte[1024]; 
-			int n = 0; 
-			while (-1 != (n = input.read(buffer))) { 
-				output.write(buffer, 0, n); 
-			}
+			int length; 
+			while ((length = input.read(buffer)) >= 0) {
+				output.write(buffer, 0, length);
+		    }
 			input.close();
 			output.close();
 		}
