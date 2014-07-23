@@ -213,6 +213,9 @@ public class MainActivity extends Activity {
 		    	// キャプチャされた画像ファイルを読み込み
 				FileInputStream input = new FileInputStream(new File(TMP_IMAGE_PATH));
 				capturedBitmap = BitmapFactory.decodeStream(input);
+				
+				capturedBitmap = Bitmap.createScaledBitmap(capturedBitmap, capturedBitmap.getWidth()/3, capturedBitmap.getHeight()/3, false);
+				
 				// 二値化 および 認識処理を実行
 				binarizeAndRecognize();
 			} catch (FileNotFoundException e) {
